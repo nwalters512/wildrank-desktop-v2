@@ -1,23 +1,13 @@
 package org.wildstang.wildrank.desktopv2;
 
-import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.ScrollPane;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -34,11 +24,6 @@ import org.json.JSONObject;
 import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.Database;
 import com.couchbase.lite.Document;
-import com.couchbase.lite.JavaContext;
-import com.couchbase.lite.Manager;
-import com.couchbase.lite.Query;
-import com.couchbase.lite.QueryEnumerator;
-import com.couchbase.lite.QueryRow;
 import com.couchbase.lite.UnsavedRevision;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -73,6 +58,7 @@ public class GetEventData extends JPanel implements ActionListener {
 	//run to get all the events the team is attending in a certain year
 	public class EventFetcherThread extends Thread {
 
+		@Override
 		public void run() {
 			System.out.println("Downloading events...");
 			//gets the json (as a string) from the blue alliance for the entered team's events in the entered year
@@ -118,6 +104,7 @@ public class GetEventData extends JPanel implements ActionListener {
 						add(fetch);
 						//redraws the window
 						GetEventData.this.revalidate();
+						eventFetched = true;
 					}
 				});
 			} catch (JSONException e) {
@@ -137,7 +124,6 @@ public class GetEventData extends JPanel implements ActionListener {
 				t.start();
 			} else {
 				//if data hasn't been fetched, fetch it
-				eventFetched = true;
 				Thread t = new EventFetcherThread();
 				t.start();
 			}
@@ -152,6 +138,7 @@ public class GetEventData extends JPanel implements ActionListener {
 			this.eventKey = eventKey;
 		}
 
+		@Override
 		public void run() {
 			System.out.println("Creating database with key: " + eventKey);
 

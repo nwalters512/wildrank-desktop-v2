@@ -81,7 +81,11 @@ public class DatabaseManager {
 	//saves the state of the database to file
 	public void saveDatabase() {
 		database.close();
-		database.open();
+		try {
+			database.open();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	//prints out the properties of all the documents in the console
