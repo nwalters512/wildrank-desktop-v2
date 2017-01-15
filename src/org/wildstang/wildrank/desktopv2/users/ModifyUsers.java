@@ -1,7 +1,7 @@
-package org.wildstang.wildrank.desktopv2;
+package org.wildstang.wildrank.desktopv2.users;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -14,10 +14,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
+import org.wildstang.wildrank.desktopv2.DatabaseManager;
 
 import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.Database;
@@ -34,67 +40,60 @@ public class ModifyUsers extends JPanel implements ActionListener {
 	JButton save;
 	JButton add;
 	JButton read;
-	File file;
-	GridBagConstraints c;
+	JTable table;
 
-	List<UserRow> users = new ArrayList<UserRow>();
+	List<User> users = new ArrayList<>();
 
-	// sets up the window
 	public ModifyUsers() {
-		setLayout(new GridBagLayout());
+		super(new BorderLayout());
+		
+		// Create control buttons
 		save = new JButton("Save");
 		save.addActionListener(this);
 		add = new JButton("Add Another");
 		add.addActionListener(this);
 		read = new JButton("Read from CSV");
 		read.addActionListener(this);
+		
+		JPanel buttons = new JPanel();
+		buttons.setLayout(new BoxLayout(buttons, BoxLayout.LINE_AXIS));
+		buttons.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+		buttons.add(add);
+		buttons.add(save);
+		buttons.add(read);
+		add(buttons, BorderLayout.PAGE_START);
+		
+		// Create the users table
+		table = new JTable(new UserTableModel(users));
+		table.setPreferredScrollableViewportSize(new Dimension(500, 300));
+		table.setFillsViewportHeight(true);
+		
+		JScrollPane scrollPane = new JScrollPane(table);
+		add(scrollPane, BorderLayout.CENTER);
+		
+		// Load users
 		try {
 			loadUsers();
 		} catch (IOException | CouchbaseLiteException e) {
 			e.printStackTrace();
 		}
-		render();
+		updateTable();
 	}
 
-	// redraws the window
-	public void render() {
-		removeAll();
-		c = new GridBagConstraints();
-		add(read, c);
-		c.gridy++;
-		c.gridx = 0;
-		System.out.println("Users: " + users.size());
-		for (int i = 0; i < users.size(); i++) {
-			c.gridy++;
-			add(users.get(i), c);
-			System.out.println(users.get(i).name.getText() + " (" + c.gridx + ", " + c.gridy + ")");
-		}
-		c.gridx = 0;
-		c.gridy++;
-		add(add, c);
-		c.gridy++;
-		add(save, c);
-	}
-
-	// loads users from documents and populates the window
+	// Loads users into memory from database
 	public void loadUsers() throws IOException, CouchbaseLiteException {
-		// creates a query looking for documents for users
 		Query query = DatabaseManager.getInstance().getAllUsers();
 		QueryEnumerator enumerator = query.run();
-		// creates an arraylist from the iterator returned from the query
 		List<QueryRow> rows = new ArrayList<>();
 		for (Iterator<QueryRow> it = enumerator; it.hasNext();) {
 			rows.add(it.next());
 		}
 
-		// parses through all the documents from the query
 		for (int i = 0; i < rows.size(); i++) {
 			Document document = rows.get(i).getDocument();
 			if (document != null) {
 				Map<String, Object> user = document.getProperties();
-				// creates a userrow based off the data from the document
-				users.add(new UserRow(
-						new User((String) user.get("id"), (String) user.get("name"), (Boolean) user.get("admin"))));
+				users.add(new User((String) user.get("id"), (String) user.get("name"), (Boolean) user.get("admin")));
 			} else {
 				System.out.println("Document is null");
 			}
@@ -105,19 +104,13 @@ public class ModifyUsers extends JPanel implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource().equals(add)) {
-			// if the "Add Another" button is pressed
-			// create a new blank userrow
-			users.add(new UserRow());
-			render();
-			WildRank.userFrame.pack();
+			// Add a blank user and rerender the table
+			users.add(new User());
+			updateTable();
 		} else if (e.getSource().equals(save)) {
-			// if the "Save" button is pressed
-			// save the users
-			save();
+			saveToDatabase();
 		} else if (e.getSource().equals(read)) {
-			// if the "Read from CSV" button is pressed
-
-			// prompt for location of CSV file
+			// Prompt for location of CSV file
 			JFileChooser chooser = new JFileChooser();
 			File startFile = new File(System.getProperty("user.home"));
 			chooser.setCurrentDirectory(chooser.getFileSystemView().getParentDirectory(startFile));
@@ -126,34 +119,31 @@ public class ModifyUsers extends JPanel implements ActionListener {
 			FileNameExtensionFilter filter = new FileNameExtensionFilter("CSV Files", "csv");
 			chooser.setFileFilter(filter);
 			if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-				file = chooser.getSelectedFile();
+				File file = chooser.getSelectedFile();
 				try {
 					// when it is found read the users from the file
-					readFromCSV();
+					readFromCSV(file);
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
-			} else {
-				file = null;
 			}
-			render();
+			updateTable();
 		}
 	}
+	
+	private void updateTable() {
+		((UserTableModel) table.getModel()).fireTableDataChanged();
+	}
 
-	// takes the users from the fields in the userrows and puts them in
-	// documents
-	public void save() {
-		System.out.println("Creating database of users");
+	public void saveToDatabase() {
+		System.out.println("Saving users");
 
 		try {
-			// gets the database
 			Database database = DatabaseManager.getInstance().getDatabase();
 
-			// parses through all the users
 			for (int i = 0; i < users.size(); i++) {
-				User user = users.get(i).getUser();
+				User user = users.get(i);
 
-				// creates a map of the users data
 				Map<String, Object> usermap = new HashMap<>();
 				usermap.put("id", user.id);
 				usermap.put("name", user.name);
@@ -161,7 +151,6 @@ public class ModifyUsers extends JPanel implements ActionListener {
 				usermap.put("type", "user");
 				System.out.println("User " + i + ": " + usermap.toString());
 
-				// creates a document for the user and adds the map to it
 				Document document = database.getDocument("user:" + user.id);
 				UnsavedRevision revision = document.createRevision();
 				revision.setProperties(usermap);
@@ -174,7 +163,7 @@ public class ModifyUsers extends JPanel implements ActionListener {
 	}
 
 	// creates users and populates the window based on data from a csv file
-	public void readFromCSV() throws IOException {
+	public void readFromCSV(File file) throws IOException {
 		BufferedReader br = new BufferedReader(new FileReader(file));
 		String line;
 		List<String[]> rawUsers = new ArrayList<>();
@@ -184,15 +173,13 @@ public class ModifyUsers extends JPanel implements ActionListener {
 			rawUsers.add(line.split(","));
 		}
 		br.close();
-		users.clear();
 		// parses through strings
 		for (int i = 0; i < rawUsers.size(); i++) {
 			String id = rawUsers.get(i)[0].replace("\"", "");
 			String name = rawUsers.get(i)[1].replace("\"", "");
 			Boolean admin = Boolean.parseBoolean(rawUsers.get(i)[2].replace("\"", ""));
 			// creates a new userrow for each found user
-			users.add(new UserRow(new User(id, name, admin)));
+			users.add(new User(id, name, admin));
 		}
 	}
-
 }

@@ -1,4 +1,4 @@
-package org.wildstang.wildrank.desktopv2;
+package org.wildstang.wildrank.desktopv2.users;
 
 //a basic container for a user's id, name, and admin status
 public class User {

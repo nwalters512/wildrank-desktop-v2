@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -16,14 +18,16 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+
+import org.wildstang.wildrank.desktopv2.users.ModifyUsers;
 
 import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.Database;
@@ -36,7 +40,7 @@ import com.couchbase.lite.UnsavedRevision;
 
 public class WildRank implements ActionListener {
 	static JFrame frame;
-	static JFrame userFrame;
+	public static JFrame userFrame;
 	static JFrame csvFrame;
 
 	JPanel panel;
@@ -89,7 +93,6 @@ public class WildRank implements ActionListener {
 		frame = new JFrame("WildRank Desktop v2");
 		panel = new GetEventData();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setLocationRelativeTo(null);
 		frame.setPreferredSize(new Dimension(300, 150));
 
 		// lines up everything in the window
@@ -102,6 +105,7 @@ public class WildRank implements ActionListener {
 
 		// final setup of window
 		frame.pack();
+		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
 	}
 
@@ -111,13 +115,21 @@ public class WildRank implements ActionListener {
 		if (e.getSource().equals(users)) {
 			// when the "Manage Users" button is pressed
 			// a new window is created and contains the ModifyUsers panel
-			userFrame = new JFrame("WildRank Desktop v2: User Manager");
-			userFrame.setPreferredSize(new Dimension(400, 700));
-			userFrame.setLocation(5, 5);
-			JScrollPane scroll = new JScrollPane(new ModifyUsers());
-			userFrame.add(scroll);
-			userFrame.pack();
-			userFrame.setVisible(true);
+			if (userFrame != null) {
+				userFrame.toFront();
+			} else {
+				userFrame = new JFrame("WildRank Desktop v2: User Manager");
+				userFrame.addWindowListener(new WindowAdapter() {
+					@Override
+					public void windowClosed(WindowEvent e) {
+						userFrame = null;
+					}
+				});
+				userFrame.add(new ModifyUsers());
+				userFrame.pack();
+				userFrame.setLocationRelativeTo(null);
+				userFrame.setVisible(true);
+			}
 		} else if (e.getSource().equals(csv)) {
 			// when the "Write CSV" button is pressed
 			// a new window is created and contains the MakeCSV panel
