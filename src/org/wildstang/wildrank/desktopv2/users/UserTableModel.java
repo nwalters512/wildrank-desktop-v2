@@ -35,7 +35,6 @@ public class UserTableModel extends AbstractTableModel {
 	
 	@Override
 	public Class<?> getColumnClass(int columnIndex) {
-		// TODO Auto-generated method stub
 		return getValueAt(0, columnIndex).getClass();
 	}
 
@@ -45,11 +44,11 @@ public class UserTableModel extends AbstractTableModel {
 
 		switch (columnIndex) {
 		case COLUMN_NAME_INDEX:
-			return user.name;
+			return user.getName();
 		case COLUMN_ID_INDEX:
-			return user.id;
+			return user.getId();
 		case COLUMN_ADMIN_INDEX:
-			return user.admin;
+			return user.isAdmin();
 		default:
 			return null;
 		}
@@ -57,22 +56,21 @@ public class UserTableModel extends AbstractTableModel {
 	
 	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
-		// Don't allow editing of ID; should be stable for any user
-		return columnIndex != COLUMN_ID_INDEX;
+		return true;
 	}
 	
 	@Override
-	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+	public void setValueAt(Object value, int rowIndex, int columnIndex) {
 		User user = users.get(rowIndex);
 		switch (columnIndex) {
 		case COLUMN_NAME_INDEX:
-			user.name = (String) aValue;
+			user.setName((String) value);
 			break;
 		case COLUMN_ID_INDEX:
-			user.id = (String) aValue;
+			user.setId((String) value);
 			break;
 		case COLUMN_ADMIN_INDEX:
-			user.admin = (Boolean) aValue;
+			user.setAdmin((Boolean) value);
 			break;
 		default:
 			return;

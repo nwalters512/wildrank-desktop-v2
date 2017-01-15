@@ -96,12 +96,20 @@ public class UserManagerPanel extends JPanel implements ActionListener, TableMod
 		for (Iterator<QueryRow> it = enumerator; it.hasNext();) {
 			rows.add(it.next());
 		}
+		
+		// Clear any existing users
+		users.clear();
 
 		for (int i = 0; i < rows.size(); i++) {
 			Document document = rows.get(i).getDocument();
 			if (document != null) {
-				Map<String, Object> user = document.getProperties();
-				users.add(new User((String) user.get("id"), (String) user.get("name"), (Boolean) user.get("admin")));
+				Map<String, Object> doc = document.getProperties();
+				User user = new User();
+				user.setId((String) doc.get("id"));
+				user.setName((String) doc.get("name"));
+				user.setAdmin((Boolean) doc.get("admin"));
+				user.setDocumentId(document.getId());
+				users.add(user);
 			} else {
 				System.out.println("Document is null");
 			}
@@ -151,15 +159,27 @@ public class UserManagerPanel extends JPanel implements ActionListener, TableMod
 
 			for (int i = 0; i < users.size(); i++) {
 				User user = users.get(i);
+				
+				if (user.getId() == null || user.getId().isEmpty()) {
+					// Skip users with empty, invalid ID
+					continue;
+				}
+				
+				if (user.getDocumentId() != null) {
+					Document doc = database.getExistingDocument(user.getDocumentId());
+					if (doc != null) {
+						doc.delete();
+					}
+				}
 
 				Map<String, Object> usermap = new HashMap<>();
-				usermap.put("id", user.id);
-				usermap.put("name", user.name);
-				usermap.put("admin", user.admin);
+				usermap.put("id", user.getId());
+				usermap.put("name", user.getName());
+				usermap.put("admin", user.isAdmin());
 				usermap.put("type", "user");
 				System.out.println("User " + i + ": " + usermap.toString());
 
-				Document document = database.getDocument("user:" + user.id);
+				Document document = database.getDocument("user:" + user.getId());
 				UnsavedRevision revision = document.createRevision();
 				revision.setProperties(usermap);
 				revision.save();
@@ -169,6 +189,14 @@ public class UserManagerPanel extends JPanel implements ActionListener, TableMod
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		
+		// After syncing, reload users from database to keep UI/memory model in sync
+		try {
+			loadUsers();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		updateTable();
 	}
 
 	// creates users and populates the window based on data from a csv file
@@ -187,7 +215,6 @@ public class UserManagerPanel extends JPanel implements ActionListener, TableMod
 			String id = rawUsers.get(i)[0].replace("\"", "");
 			String name = rawUsers.get(i)[1].replace("\"", "");
 			Boolean admin = Boolean.parseBoolean(rawUsers.get(i)[2].replace("\"", ""));
-			// creates a new userrow for each found user
 			users.add(new User(id, name, admin));
 		}
 	}
