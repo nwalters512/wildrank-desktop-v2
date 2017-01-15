@@ -56,7 +56,7 @@ public class DatabaseManager {
 			public void map(Map<String, Object> document, Emitter emitter) {
 				Object docType = document.get("type");
 				if (docType != null && docType.toString().equals("user")) {
-					emitter.emit(document.get("user_id"), null);
+					emitter.emit(document.get("id"), null);
 				}
 			}
 		}, "7");
