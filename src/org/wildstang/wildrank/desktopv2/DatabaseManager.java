@@ -26,11 +26,11 @@ public class DatabaseManager {
 	private Manager manager;
 	private Database database;
 
-	//used to access the database manager from a static context
+	// used to access the database manager from a static context
 	public static DatabaseManager getInstance() throws CouchbaseLiteException, IOException {
-		//checks if there isn't an existing database manager
+		// checks if there isn't an existing database manager
 		if (instance == null) {
-			//if there isn't one create a new on
+			// if there isn't one create a new on
 			instance = new DatabaseManager(new JavaContext() {
 				@Override
 				public File getRootDirectory() {
@@ -38,16 +38,17 @@ public class DatabaseManager {
 				}
 			});
 		}
-		//then return the current one
+		// then return the current one
 		return instance;
 	}
 
-	//constructor used to setup the database manager when getInstance() is called for the first time
+	// constructor used to setup the database manager when getInstance() is
+	// called for the first time
 	private DatabaseManager(JavaContext context) throws CouchbaseLiteException, IOException {
 		manager = new Manager(context, Manager.DEFAULT_OPTIONS);
-		//gets the database based off its name
+		// gets the database based off its name
 		database = manager.getDatabase("wildrank");
-		//gets the view based off its name
+		// gets the view based off its name
 		View userView = database.getView("user_view");
 		userView.setMap(new Mapper() {
 
@@ -61,40 +62,39 @@ public class DatabaseManager {
 		}, "7");
 	}
 
-	//returns the manager
+	// returns the manager
 	public Manager getManager() {
 		return manager;
 	}
 
-	//returns the database
+	// returns the database
 	public Database getDatabase() {
 		return database;
 	}
 
-	//returns a query of all the users
+	// returns a query of all the users
 	public Query getAllUsers() {
 		Query query = database.getView("user_view").createQuery();
 		query.setDescending(false);
 		return query;
 	}
 
-	//saves the state of the database to file
+	// saves the state of the database to file
 	public void saveDatabase() throws CouchbaseLiteException {
 		database.close();
 		database.open();
 	}
-	
-	//prints out the properties of all the documents in the console
-	public void printAllDocuments()
-	{
+
+	// prints out the properties of all the documents in the console
+	public void printAllDocuments() {
 		try {
-			//creates a query for all the documents
+			// creates a query for all the documents
 			Query allDocsQuery = DatabaseManager.getInstance().getDatabase().createAllDocumentsQuery();
 			QueryEnumerator result = allDocsQuery.run();
 			for (Iterator<QueryRow> it = result; it.hasNext();) {
 				QueryRow row = it.next();
 				Document doc = row.getDocument();
-				//prints out the document's properties
+				// prints out the document's properties
 				System.out.println("Document contents: " + doc.getProperties());
 			}
 		} catch (Exception e) {

@@ -6,14 +6,14 @@ public class User {
 	String name;
 	boolean admin;
 
-	//it can be created with an id, name, and admin status
+	// it can be created with an id, name, and admin status
 	public User(String id, String name, boolean admin) {
 		this.id = id;
 		this.name = name;
 		this.admin = admin;
 	}
 
-	//or as a blank user
+	// or as a blank user
 	public User() {
 	}
 }

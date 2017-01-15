@@ -15,7 +15,7 @@ public class UserRow extends JPanel {
 	JCheckBox admin;
 	User user;
 
-	//constructor used when reading from file
+	// constructor used when reading from file
 	public UserRow(User user) {
 		this.user = user;
 		id = new JTextField(user.id, 6);
@@ -28,7 +28,7 @@ public class UserRow extends JPanel {
 		add(admin);
 	}
 
-	//constructor used for when a new user is created
+	// constructor used for when a new user is created
 	public UserRow() {
 		user = new User();
 		id = new JTextField("", 6);
@@ -41,7 +41,7 @@ public class UserRow extends JPanel {
 		add(admin);
 	}
 
-	//returns a user that is created from the data in the fields
+	// returns a user that is created from the data in the fields
 	public User getUser() {
 		return new User(id.getText(), name.getText(), admin.isSelected());
 	}
