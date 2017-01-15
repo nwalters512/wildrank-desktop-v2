@@ -234,7 +234,6 @@ public class GetEventData extends JPanel implements ActionListener {
 			System.out.println("Done!");
 			removeAll();
 			add(new JLabel("Done!"));
-			WildRank.frame.pack();
 			GetEventData.this.revalidate();
 		}
 	}

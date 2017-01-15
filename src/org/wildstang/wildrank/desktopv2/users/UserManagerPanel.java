@@ -21,6 +21,8 @@ import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.wildstang.wildrank.desktopv2.DatabaseManager;
@@ -36,7 +38,7 @@ import com.couchbase.lite.UnsavedRevision;
 /*
  * ModifyUsers is a window that is used to add or edit users
  */
-public class ManageUsers extends JPanel implements ActionListener {
+public class UserManagerPanel extends JPanel implements ActionListener, TableModelListener {
 	JButton save;
 	JButton add;
 	JButton read;
@@ -44,9 +46,11 @@ public class ManageUsers extends JPanel implements ActionListener {
 
 	List<User> users = new ArrayList<>();
 
-	public ManageUsers() {
+	private boolean editedWithoutSaving = false;
+
+	public UserManagerPanel() {
 		super(new BorderLayout());
-		
+
 		// Create control buttons
 		save = new JButton("Save");
 		save.addActionListener(this);
@@ -54,7 +58,7 @@ public class ManageUsers extends JPanel implements ActionListener {
 		add.addActionListener(this);
 		read = new JButton("Read from CSV");
 		read.addActionListener(this);
-		
+
 		JPanel buttons = new JPanel();
 		buttons.setLayout(new BoxLayout(buttons, BoxLayout.LINE_AXIS));
 		buttons.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
@@ -62,15 +66,15 @@ public class ManageUsers extends JPanel implements ActionListener {
 		buttons.add(save);
 		buttons.add(read);
 		add(buttons, BorderLayout.PAGE_START);
-		
+
 		// Create the users table
 		table = new JTable(new UserTableModel(users));
 		table.setPreferredScrollableViewportSize(new Dimension(500, 300));
 		table.setFillsViewportHeight(true);
-		
+
 		JScrollPane scrollPane = new JScrollPane(table);
 		add(scrollPane, BorderLayout.CENTER);
-		
+
 		// Load users
 		try {
 			loadUsers();
@@ -78,6 +82,10 @@ public class ManageUsers extends JPanel implements ActionListener {
 			e.printStackTrace();
 		}
 		updateTable();
+
+		// Listen for future changes so we know when to warn if the user tries
+		// to close without saving
+		table.getModel().addTableModelListener(this);
 	}
 
 	// Loads users into memory from database
@@ -130,7 +138,7 @@ public class ManageUsers extends JPanel implements ActionListener {
 			updateTable();
 		}
 	}
-	
+
 	private void updateTable() {
 		((UserTableModel) table.getModel()).fireTableDataChanged();
 	}
@@ -156,10 +164,11 @@ public class ManageUsers extends JPanel implements ActionListener {
 				revision.setProperties(usermap);
 				revision.save();
 			}
+
+			editedWithoutSaving = false;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	// creates users and populates the window based on data from a csv file
@@ -181,5 +190,14 @@ public class ManageUsers extends JPanel implements ActionListener {
 			// creates a new userrow for each found user
 			users.add(new User(id, name, admin));
 		}
+	}
+
+	@Override
+	public void tableChanged(TableModelEvent e) {
+		editedWithoutSaving = true;
+	}
+
+	public boolean isSafeToClose() {
+		return !editedWithoutSaving;
 	}
 }

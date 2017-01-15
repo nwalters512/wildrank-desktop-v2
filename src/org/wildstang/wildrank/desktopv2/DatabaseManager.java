@@ -22,19 +22,26 @@ import com.couchbase.lite.View;
  */
 public class DatabaseManager {
 	private static DatabaseManager instance;
+	private static File directory;
 
 	private Manager manager;
 	private Database database;
+	
+	public static void setDirectory(File directory) {
+		DatabaseManager.directory = directory;
+	}
 
 	// used to access the database manager from a static context
 	public static DatabaseManager getInstance() throws CouchbaseLiteException, IOException {
-		// checks if there isn't an existing database manager
+		if (directory == null) {
+			throw new RuntimeException("DatabaseManager.setDirectory() must be called before an instance of DatabaseManager can be created.");
+		}
 		if (instance == null) {
 			// if there isn't one create a new on
 			instance = new DatabaseManager(new JavaContext() {
 				@Override
 				public File getRootDirectory() {
-					return WildRank.directory;
+					return directory;
 				}
 			});
 		}

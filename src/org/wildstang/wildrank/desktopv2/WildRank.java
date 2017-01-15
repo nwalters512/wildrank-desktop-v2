@@ -23,11 +23,13 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
-import org.wildstang.wildrank.desktopv2.users.ManageUsers;
+import org.wildstang.wildrank.desktopv2.users.UserManager;
+import org.wildstang.wildrank.desktopv2.users.UserManagerPanel;
 
 import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.Database;
@@ -39,16 +41,15 @@ import com.couchbase.lite.TransactionalTask;
 import com.couchbase.lite.UnsavedRevision;
 
 public class WildRank implements ActionListener {
-	static JFrame frame;
-	public static JFrame userFrame;
-	static JFrame csvFrame;
+	private static JFrame frame;
+	private static JFrame csvFrame;
+	
+	private UserManager userManager;
 
-	JPanel panel;
-	JButton users;
-	JButton csv;
-	JButton addPictures;
-
-	static File directory;
+	private JPanel panel;
+	private JButton users;
+	private JButton csv;
+	private JButton addPictures;
 
 	public static void main(String[] args) {
 		new WildRank();
@@ -63,17 +64,21 @@ public class WildRank implements ActionListener {
 			e.printStackTrace();
 		}
 
-		// immediately prompts for database location
-		JFileChooser chooser = new JFileChooser();
-		File startFile = new File(System.getProperty("user.home"));
-		chooser.setCurrentDirectory(chooser.getFileSystemView().getParentDirectory(startFile));
-		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-		chooser.setDialogTitle("Select the flash drive location");
-		if (chooser.showOpenDialog(panel) == JFileChooser.APPROVE_OPTION) {
-			directory = chooser.getSelectedFile();
-		} else {
-			directory = null;
+		// Immediately prompt for database location
+		File directory = null;
+		while (directory == null) {
+			JFileChooser chooser = new JFileChooser();
+			File startFile = new File(System.getProperty("user.home"));
+			chooser.setCurrentDirectory(chooser.getFileSystemView().getParentDirectory(startFile));
+			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+			chooser.setDialogTitle("Select the flash drive location");
+			if (chooser.showOpenDialog(panel) == JFileChooser.APPROVE_OPTION) {
+				directory = chooser.getSelectedFile();
+			} else {
+				JOptionPane.showMessageDialog(null, "You must select a directory.", "Error!", JOptionPane.ERROR_MESSAGE);
+			}
 		}
+		DatabaseManager.setDirectory(directory);
 
 		// button to add or edit users
 		users = new JButton("Manage Users");
@@ -113,23 +118,10 @@ public class WildRank implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		// defines what happens when buttons are pressed
 		if (e.getSource().equals(users)) {
-			// when the "Manage Users" button is pressed
-			// a new window is created and contains the ModifyUsers panel
-			if (userFrame != null) {
-				userFrame.toFront();
-			} else {
-				userFrame = new JFrame("WildRank Desktop v2: User Manager");
-				userFrame.addWindowListener(new WindowAdapter() {
-					@Override
-					public void windowClosed(WindowEvent e) {
-						userFrame = null;
-					}
-				});
-				userFrame.add(new ManageUsers());
-				userFrame.pack();
-				userFrame.setLocationRelativeTo(null);
-				userFrame.setVisible(true);
+			if (userManager == null) {
+				userManager = new UserManager();
 			}
+			userManager.show();
 		} else if (e.getSource().equals(csv)) {
 			// when the "Write CSV" button is pressed
 			// a new window is created and contains the MakeCSV panel
