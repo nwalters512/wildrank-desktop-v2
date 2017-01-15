@@ -36,7 +36,7 @@ import com.couchbase.lite.UnsavedRevision;
 /*
  * ModifyUsers is a window that is used to add or edit users
  */
-public class ModifyUsers extends JPanel implements ActionListener {
+public class ManageUsers extends JPanel implements ActionListener {
 	JButton save;
 	JButton add;
 	JButton read;
@@ -44,7 +44,7 @@ public class ModifyUsers extends JPanel implements ActionListener {
 
 	List<User> users = new ArrayList<>();
 
-	public ModifyUsers() {
+	public ManageUsers() {
 		super(new BorderLayout());
 		
 		// Create control buttons

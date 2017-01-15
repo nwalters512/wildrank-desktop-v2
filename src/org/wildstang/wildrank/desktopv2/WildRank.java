@@ -27,7 +27,7 @@ import javax.swing.JPanel;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
-import org.wildstang.wildrank.desktopv2.users.ModifyUsers;
+import org.wildstang.wildrank.desktopv2.users.ManageUsers;
 
 import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.Database;
@@ -125,7 +125,7 @@ public class WildRank implements ActionListener {
 						userFrame = null;
 					}
 				});
-				userFrame.add(new ModifyUsers());
+				userFrame.add(new ManageUsers());
 				userFrame.pack();
 				userFrame.setLocationRelativeTo(null);
 				userFrame.setVisible(true);
