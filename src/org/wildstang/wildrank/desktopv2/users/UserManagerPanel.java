@@ -54,7 +54,7 @@ public class UserManagerPanel extends JPanel implements ActionListener, TableMod
 		// Create control buttons
 		save = new JButton("Save");
 		save.addActionListener(this);
-		add = new JButton("Add Another");
+		add = new JButton("Add User");
 		add.addActionListener(this);
 		read = new JButton("Read from CSV");
 		read.addActionListener(this);
